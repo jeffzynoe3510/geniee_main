@@ -32,10 +32,18 @@ const nextConfig = {
     esmExternals: true,
     appDir: true,
     serverComponentsExternalPackages: ['@prisma/client'],
+    serverActions: true,
   },
   // Ensure proper handling of client components
   compiler: {
     styledComponents: true,
+  },
+  images: {
+    domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
+  },
+  // Configure page generation
+  generateStaticParams: async () => {
+    return [];
   },
 };
 
