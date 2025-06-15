@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSession } from 'next-auth/react'
 
-import { useUpload } from "@/utilities/runtime-helpers";
+import { useUpload } from "@/hooks/useUpload";
 
 interface MirrorDimensions {
   width: number;

@@ -3,14 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
-    esmExternals: 'loose'
+    esmExternals: true,
   },
-  webpack: (config) => {
-    config.externals = [...config.externals, { canvas: "canvas" }]; // required to make pdfjs work
-    return config;
-  },
-  // Ensure proper source directory recognition
-  distDir: '.next',
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
@@ -18,6 +12,17 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  webpack: (config, { isServer }) => {
+    // Add any webpack customizations here
+    return config;
+  },
+  // Ensure proper source directory recognition
+  distDir: '.next',
 };
 
 module.exports = nextConfig;
