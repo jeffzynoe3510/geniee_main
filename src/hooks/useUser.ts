@@ -1,34 +1,43 @@
-import { useState, useEffect } from "react";
+'use client';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
+import { useAuth } from '@/context/AuthContext';
+
+interface UseUserResult {
+  data: {
+    id?: string;
+    email?: string;
+    name?: string;
+  } | null;
+  loading: boolean;
+  error: Error | null;
+  session: any | null;
 }
 
-export default function useUser() {
-  const [data, setData] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export default function useUser(): UseUserResult {
+  try {
+    const auth = useAuth();
+    if (!auth) {
+      return {
+        data: null,
+        loading: true,
+        error: new Error('Auth context not available'),
+        session: null
+      };
+    }
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (!response.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        const userData = await response.json();
-        setData(userData);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch user'));
-      } finally {
-        setLoading(false);
-      }
+    const { user, loading } = auth;
+    return {
+      data: user,
+      loading,
+      error: null,
+      session: null
     };
-
-    fetchUser();
-  }, []);
-
-  return { data, loading, error };
-} 
+  } catch (err) {
+    return {
+      data: null,
+      loading: false,
+      error: err instanceof Error ? err : new Error('Failed to load user data'),
+      session: null
+    };
+  }
+}

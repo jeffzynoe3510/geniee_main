@@ -19,6 +19,14 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
@@ -31,17 +39,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: session.user.email as string,
         name: session.user.name as string,
       });
-    } else {
+      setLoading(false);
+    } else if (status === 'unauthenticated') {
       setUser(null);
+      setLoading(false);
+    } else {
+      setLoading(true);
     }
-    setLoading(status === 'loading');
   }, [session, status]);
 
+  const value = {
+    user,
+    loading,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export const useAuth = () => useContext(AuthContext); 
+} 

@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    esmExternals: true,
-  },
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
@@ -17,12 +14,29 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  webpack: (config, { isServer }) => {
-    // Add any webpack customizations here
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
     return config;
   },
-  // Ensure proper source directory recognition
-  distDir: '.next',
+  // Disable static page generation
+  output: 'standalone',
+  // Configure page generation
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  // Disable static optimization for all pages
+  staticPageGenerationTimeout: 0,
+  // Configure experimental features
+  experimental: {
+    esmExternals: true,
+    appDir: true,
+    serverComponentsExternalPackages: ['@prisma/client'],
+  },
+  // Ensure proper handling of client components
+  compiler: {
+    styledComponents: true,
+  },
 };
 
 module.exports = nextConfig;

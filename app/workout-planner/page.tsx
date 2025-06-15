@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorMessage from '@/components/ErrorMessage';
 
 interface WorkoutPlan {
   id: string;
@@ -8,10 +12,32 @@ interface WorkoutPlan {
   lastUpdated: string;
 }
 
-export default function WorkoutPlannerPage() {
+// Dynamically import useUser to avoid SSR issues
+const useUser = dynamic(() => import('@/hooks/useUser'), { ssr: false });
+
+function WorkoutPlannerContent() {
+  const [userData, setUserData] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState<Error | null>(null);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const useUserModule = await import('@/hooks/useUser');
+        const { data, loading, error } = useUserModule.default();
+        setUserData(data);
+        setUserLoading(loading);
+        setUserError(error);
+      } catch (err) {
+        setUserError(err instanceof Error ? err : new Error('Failed to load user data'));
+      }
+    };
+
+    loadUser();
+  }, []);
 
   useEffect(() => {
     const fetchWorkoutPlans = async () => {
@@ -32,13 +58,34 @@ export default function WorkoutPlannerPage() {
       }
     };
 
-    fetchWorkoutPlans();
-  }, []);
+    if (!userLoading) {
+      fetchWorkoutPlans();
+    }
+  }, [userLoading]);
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (userError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
+        <ErrorMessage 
+          message="Unable to load user data. Please try refreshing the page."
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -46,7 +93,10 @@ export default function WorkoutPlannerPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
-        <div className="text-red-600">{error}</div>
+        <ErrorMessage 
+          message={error}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -54,7 +104,9 @@ export default function WorkoutPlannerPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Workout Planner</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">
+          Workout Planner{userData?.name ? ` for ${userData.name}` : ''}
+        </h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Workout Plan Card */}
@@ -99,5 +151,13 @@ export default function WorkoutPlannerPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkoutPlannerPage() {
+  return (
+    <ErrorBoundary>
+      <WorkoutPlannerContent />
+    </ErrorBoundary>
   );
 } 
